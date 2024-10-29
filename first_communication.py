@@ -12,7 +12,14 @@ from picamera2.encoders import H264Encoder
 from picamera2.outputs import CircularOutput
 import argparse
 
+Kp = 1
+Kd = 0
+Ki = 0
+prev_error = 0
+error_sum = 0
 
+H_val = 15
+thold_val = 4
 
 # Function for performing color subtraction
 # Inputs:
@@ -88,6 +95,28 @@ def contours_localization(img):
     return center, np.int16(radius)
 
 
+# proportional and derivative controller limited to 20 to 80% duty cycle
+# can change this later
+def pid_controller(input):
+    normalized_input = input / 640
+    setpoint = 0.5
+    error = setpoint - normalized_input
+    P = Kp * error
+    D = Kd * (error - prev_error)
+    prev_error = error
+    error_sum += error
+    I = Ki * error_sum
+
+    right_duty_cycle = ((P * 60) + 50) + D + I
+    left_duty_cycle = ((-P * 60) + 50) - D - I
+
+    left_duty_cycle = max(20, min(80, left_duty_cycle))
+    right_duty_cycle = max(20, min(80,right_duty_cycle))
+
+    left_motor.ChangeDutyCycle(left_duty_cycle)
+    right_motor.ChangeDutyCycle(right_duty_cycle)
+
+    
 
 # # serial communication between arduino and raspberry pi
 # ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
@@ -101,8 +130,10 @@ def contours_localization(img):
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(12, GPIO.OUT)
 GPIO.setup(13, GPIO.OUT)
-pwm1 = GPIO.PWM(12, 1000)
-pwm0 = GPIO.PWM(13,1000)
+left_motor = GPIO.PWM(12, 50)
+right_motor = GPIO.PWM(13, 50)
+left_motor.start(0)
+right_motor.start(0)
 
 
 # initialize the camera and grab a reference to the raw camera capture
@@ -115,12 +146,6 @@ picam2.start()
 picam2.start_encoder(encoder)
 time.sleep(0.1)
 
-Kp = 1
-Kd = 0
-Ki = 0
-
-H_val = 15
-thold_val = 4
 
 
 while True:
@@ -142,9 +167,7 @@ while True:
 
     cv2.imshow("Image", image)
 
-    output = x_coordinate - 320
-
-    print(output)
+    pid_controller(x_coordinate)
 
     key = cv2.waitKey(1) & 0xFF
 
