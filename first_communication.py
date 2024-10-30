@@ -102,13 +102,13 @@ def pid_controller(input):
     setpoint = 0.5
     error = setpoint - normalized_input
     P = Kp * error
-    D = Kd * (error - prev_error)
-    prev_error = error
-    error_sum += error
-    I = Ki * error_sum
+    # D = Kd * (error - prev_error)
+    # prev_error = error
+    # error_sum += error
+    # I = Ki * error_sum
 
-    right_duty_cycle = ((P * 60) + 50) + D + I
-    left_duty_cycle = ((-P * 60) + 50) - D - I
+    right_duty_cycle = ((P * 60) + 50)
+    left_duty_cycle = ((-P * 60) + 50)
 
     left_duty_cycle = max(20, min(80, left_duty_cycle))
     right_duty_cycle = max(20, min(80,right_duty_cycle))
@@ -159,13 +159,15 @@ while True:
 
     _, binary_img = cv2.threshold(filtered_image,thold_val,255,cv2.THRESH_BINARY_INV)
 
-    center, radius = identify_ball(binary_img)
-    x_coordinate, y_coordinate = center
-
+    # center, radius = identify_ball(binary_img)
     center, radius = contours_localization(binary_img)
+    x_coordinate, y_coordinate = center
     cv2.circle(image,center, radius,(0,255,0),2)
 
     cv2.imshow("Image", image)
+
+    cv2.imshow("Binary Image", binary_img)
+    print(x_coordinate)
 
     pid_controller(x_coordinate)
 
@@ -174,7 +176,6 @@ while True:
     if key == ord("q"):
         break
     if key == ord("c"):
-        plt.imshow(binary_img, cmap='gray')
         plt.show()
 
 
