@@ -293,11 +293,12 @@ left_motor.start(0)
 right_motor.start(0)
 
 completeSignal = np.array([])
+sampledSignalLength = len(filter)
 
 # Samples the mic and returns the sampled signal
 def sampleMic():
     # If completeSignal is full, delete first entry
-    if len(completeSignal) >= len(filter):
+    if len(completeSignal) >= sampledSignalLength:
       completeSignal = completeSignal[1:]
     
     # Read from channel 0
@@ -305,7 +306,7 @@ def sampleMic():
     np.append(completeSignal, new_entry)
     
     # If complete signal is not full, sample until it is
-    if len(completeSignal) < len(filter):
+    if len(completeSignal) < sampledSignalLength:
         return sampleMic()
     else:
         return completeSignal
