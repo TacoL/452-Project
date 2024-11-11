@@ -327,4 +327,4 @@ def getPWM():
 while True:
     pwm = getPWM()
     left_motor.ChangeDutyCycle(pwm)
-    right_motor.ChangeDutyCycle(pwm)
+    right_motor.ChangeDutyCycle(pwm * .66) # This makes the car turn right
