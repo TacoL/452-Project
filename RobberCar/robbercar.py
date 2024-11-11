@@ -1,5 +1,6 @@
 import numpy as np
 import RPi.GPIO as GPIO
+import Adafruit_ADS1x15
 
 filter = np.array({
      0.0165508818021,0.0006252450262029,0.0005877826069423,0.0005242853186821,
@@ -283,7 +284,7 @@ Setup: Mic --> ADC --> Raspberry Pi
 
 # Initialize GPIO pins
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(??, GPIO.IN) # What is the input for the mic ADC?
+adc = Adafruit_ADS1x15.ADS1115()
 GPIO.setup(12, GPIO.OUT)
 GPIO.setup(13, GPIO.OUT)
 left_motor = GPIO.PWM(12, 50)
@@ -291,10 +292,25 @@ right_motor = GPIO.PWM(13, 50)
 left_motor.start(0)
 right_motor.start(0)
 
-# TODO
+completeSignal = np.array([])
+
 # Samples the mic and returns the sampled signal
 def sampleMic():
-    print()
+    # If completeSignal is full, delete first entry
+    if len(completeSignal) >= len(filter):
+      completeSignal = completeSignal[1:]
+    
+    # Read from channel 0
+    new_entry = adc.read_adc(0, gain=1)
+    np.append(completeSignal, new_entry)
+    
+    # If complete signal is not full, sample until it is
+    if len(completeSignal) < len(filter):
+        return sampleMic()
+    else:
+        return completeSignal
+        
+
 
 # Output is the PWM
 def getPWM():
