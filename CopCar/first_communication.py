@@ -50,6 +50,7 @@ def identify_ball(img):
     h, w = img.shape
 
     k = np.sum(img)
+    # print(k)
         # print("K is: ", k)
     if k == 0:
     # No orange pixels.  Return some default value
@@ -91,30 +92,38 @@ def contours_localization(img):
 
     (x,y), radius = cv2.minEnclosingCircle(largest_contour)
     center = (np.int16(x), np.int16(y))
-
-    return center, np.int16(radius)
+    # print(radius)
+    if radius < 50:
+        return (0,0), 0
+    else:
+        return center, np.int16(radius)
 
 
 # proportional and derivative controller limited to 20 to 80% duty cycle
 # can change this later
 def pid_controller(input):
-    normalized_input = input / 640
-    setpoint = 0.5
-    error = setpoint - normalized_input
-    P = Kp * error
-    # D = Kd * (error - prev_error)
-    # prev_error = error
-    # error_sum += error
-    # I = Ki * error_sum
+    print(input)
+    if input!= 0:
+        normalized_input = input / 640
+        setpoint = 0.5
+        error = setpoint - normalized_input
+        P = Kp * error
+        # D = Kd * (error - prev_error)
+        # prev_error = error
+        # error_sum += error
+        # I = Ki * error_sum
 
-    right_duty_cycle = ((P * 60) + 50)
-    left_duty_cycle = ((-P * 60) + 50)
+        right_duty_cycle = ((P * 60) + 50)
+        left_duty_cycle = ((-P * 60) + 50)
 
-    left_duty_cycle = max(20, min(80, left_duty_cycle))
-    right_duty_cycle = max(20, min(80,right_duty_cycle))
+        left_duty_cycle = max(20, min(80, left_duty_cycle))
+        right_duty_cycle = max(20, min(80,right_duty_cycle))
 
-    left_motor.ChangeDutyCycle(left_duty_cycle)
-    right_motor.ChangeDutyCycle(right_duty_cycle)
+        left_motor.ChangeDutyCycle(left_duty_cycle)
+        right_motor.ChangeDutyCycle(right_duty_cycle)
+    else:
+        left_motor.ChangeDutyCycle(1)
+        right_motor.ChangeDutyCycle(1)
 
     
 
@@ -130,8 +139,8 @@ def pid_controller(input):
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(12, GPIO.OUT)
 GPIO.setup(13, GPIO.OUT)
-left_motor = GPIO.PWM(12, 50)
-right_motor = GPIO.PWM(13, 50)
+left_motor = GPIO.PWM(12, 1)
+right_motor = GPIO.PWM(13, 1)
 left_motor.start(0)
 right_motor.start(0)
 
@@ -167,7 +176,7 @@ while True:
     cv2.imshow("Image", image)
 
     cv2.imshow("Binary Image", binary_img)
-    print(x_coordinate)
+    # print(x_coordinate)
 
     pid_controller(x_coordinate)
 
