@@ -102,7 +102,7 @@ def contours_localization(img):
 # proportional and derivative controller limited to 20 to 80% duty cycle
 # can change this later
 def pid_controller(input):
-    print(input)
+    # print(input)
     if input!= 0:
         normalized_input = input / 640
         setpoint = 0.5
