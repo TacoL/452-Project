@@ -167,8 +167,6 @@ def apply_filter(data, sos):
     
 
 def audio_scale(left, right, audio_signal):
-    # TODO: scale left and right according to the mic output - how loud the siren is
-
     # Apply bandpass filter to the audio signal
     filtered_signal = apply_filter(audio_signal)
 
