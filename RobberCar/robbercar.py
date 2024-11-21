@@ -1,8 +1,25 @@
 import numpy as np
 import RPi.GPIO as GPIO
-import Adafruit_ADS1x15
 
-filter = np.array({
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+import matplotlib.pyplot as plt
+import scipy.io.wavfile as wavfile
+import time
+
+import sys
+sys.setrecursionlimit(2000)
+
+i2c = busio.I2C(board.SCL, board.SDA)
+
+ads = ADS.ADS1115(i2c)
+
+ads.gain = 1
+chan = AnalogIn(ads, ADS.P0)
+
+filter = [
      0.0165508818021,0.0006252450262029,0.0005877826069423,0.0005242853186821,
   0.0004396197508569,0.0003413597916263,0.0002286818213223,9.886064262141e-05,
   -6.06566923945e-05,-0.000261247949221,-0.000516961590865,-0.0008305402374912,
@@ -276,15 +293,10 @@ filter = np.array({
   -0.001979048261268,-0.001591497416429,-0.001196947942422,-0.0008305402374912,
   -0.000516961590865,-0.000261247949221,-6.06566923945e-05,9.886064262141e-05,
   0.0002286818213223,0.0003413597916263,0.0004396197508569,0.0005242853186821,
-  0.0005877826069423,0.0006252450262029,   0.0165508818021})
-
-'''
-Setup: Mic --> ADC --> Raspberry Pi
-'''
+  0.0005877826069423,0.0006252450262029,   0.0165508818021]
 
 # Initialize GPIO pins
 GPIO.setmode(GPIO.BCM)
-adc = Adafruit_ADS1x15.ADS1115()
 GPIO.setup(12, GPIO.OUT)
 GPIO.setup(13, GPIO.OUT)
 left_motor = GPIO.PWM(12, 50)
@@ -292,24 +304,26 @@ right_motor = GPIO.PWM(13, 50)
 left_motor.start(0)
 right_motor.start(0)
 
-completeSignal = np.array([])
-sampledSignalLength = len(filter)
+completeSignal = []
+sampledSignalLength = 1095
 
 # Samples the mic and returns the sampled signal
 def sampleMic():
+    global completeSignal
+    global sampledsignalLength
     # If completeSignal is full, delete first entry
     if len(completeSignal) >= sampledSignalLength:
       completeSignal = completeSignal[1:]
     
     # Read from channel 0
-    new_entry = adc.read_adc(0, gain=1)
-    np.append(completeSignal, new_entry)
+    new_entry = chan.voltage
+    completeSignal.append(new_entry)
+    print(new_entry)
     
     # If complete signal is not full, sample until it is
     if len(completeSignal) < sampledSignalLength:
-        return sampleMic()
-    else:
-        return completeSignal
+      time.sleep(10*10**(-3))
+      sampleMic()
         
 
 
@@ -323,8 +337,16 @@ def getPWM():
     pwm = avgValue / maxValue
     return pwm
 
+print("start")
+sampleMic()
+completeSignal = [x - 3.3/2 for x in completeSignal]
+completeSignalNormal = [(x / 3.3)*65535 for x in completeSignal]
+numpysignal = np.int16(completeSignalNormal)
+wavfile.write("output.wav", 100, numpysignal)
+print("done")
+
 # Do loop
-while True:
-    pwm = getPWM()
-    left_motor.ChangeDutyCycle(pwm)
-    right_motor.ChangeDutyCycle(pwm * .66) # This makes the car turn right
+#while True:
+    # pwm = getPWM()
+    # left_motor.ChangeDutyCycle(pwm)
+    # right_motor.ChangeDutyCycle(pwm * .66) # This makes the car turn right
