@@ -1,7 +1,8 @@
+#include "bandpass.h"
 const int sampleWindow = 50;  // Sample window width in mS (50 mS = 20Hz)
 int const AMP_PIN = A0;       // Preamp output pin connected to A0
 
-unsigned const int signalLength = 100;
+const int signalLength = BPL;
 double completeSignal[signalLength];
 double * signalIdx = completeSignal;
 
@@ -62,6 +63,14 @@ void sampleMic()
       signalIdx++;
     }
   }
+}
+
+double[] convolve(double[] input, double[] filter) {
+  int N = x.size();
+  int M = h.size();
+  int outputSize = N + M - 1; // The size of the output
+  double filteredSignal[outputSize];
+
 }
 
 double getPWM() {
