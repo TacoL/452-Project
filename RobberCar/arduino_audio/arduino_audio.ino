@@ -1,16 +1,16 @@
 const int sampleWindow = 50;  // Sample window width in mS (50 mS = 20Hz)
 int const AMP_PIN = A0;       // Preamp output pin connected to A0
 
-unsigned int signalLength = 1095;
-unsigned int completeSignal[signalLength];
-unsigned int * signalIdx = &completeSignal;
+unsigned const int signalLength = 100;
+double completeSignal[signalLength];
+double * signalIdx = completeSignal;
 
 void setup()
 {
   Serial.begin(9600);
 }
 
-unsigned int sampleOnce()
+double sampleOnce()
 {
   unsigned int sample = 0;
   unsigned int peakToPeak = 0;   // peak-to-peak level
@@ -53,17 +53,27 @@ void sampleMic()
     }
 
     // Sample once
-    completeSignal[signalIdx] = sampleOnce();
+    *signalIdx = sampleOnce();
   }
   // If completeSignal is not full, sample until it is
   else {
     while (signalIdx != completeSignal + signalLength - 1) {
-      completeSignal[signalIdx] = sampleOnce();
+      *signalIdx = sampleOnce();
       signalIdx++;
     }
   }
 }
+
 void loop()
 {
   sampleMic();
+  
+  for (int i = 0; i < signalLength; ++i) {
+    Serial.println(completeSignal[i]);
+  }
+
+  while (true)
+  {
+
+  }
 }
