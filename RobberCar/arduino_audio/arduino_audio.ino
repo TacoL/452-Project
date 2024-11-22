@@ -37,7 +37,7 @@ double sampleOnce()
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
   //Serial.println(peakToPeak);
-  double volts = (peakToPeak * 3.3) / 1024;  // convert to volts
+  double volts = (peakToPeak * 5.0) / 1024.0;  // convert to volts
   //Serial.println(volts);
   return volts;
 }
@@ -64,16 +64,22 @@ void sampleMic()
   }
 }
 
+double getPWM() {
+  // filter the signal with the bandpass
+
+  // read filtered signal and return appropriate PWM
+}
+
 void loop()
 {
   sampleMic();
   
-  for (int i = 0; i < signalLength; ++i) {
-    Serial.println(completeSignal[i]);
-  }
+  // for (int i = 0; i < signalLength; ++i) {
+  //   Serial.println(completeSignal[i]);
+  // }
 
-  while (true)
-  {
+  // while (true)
+  // {
 
-  }
+  // }
 }
