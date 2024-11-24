@@ -14,13 +14,12 @@
  */
 
 /* General type conversion for MATLAB generated C-code  */
-#include "tmwtypes.h"
 /* 
  * Expected path to tmwtypes.h 
  * /Applications/MATLAB_R2022b.app/extern/include/tmwtypes.h 
  */
 const int BPL = 305;
-const real64_T BP[305] = {
+const double BP[305] = {
   -3.413924890067e-05,-0.0001063660345381,9.608678543518e-05,-8.344138986944e-05,
   3.699017290274e-05, 4.09852583552e-05,-0.0001247317868527,0.0001761043320756,
   -0.0001614376427014,6.965607686792e-05,7.659457688491e-05,-0.0002237405938422,

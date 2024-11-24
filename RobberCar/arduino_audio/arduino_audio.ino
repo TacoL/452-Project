@@ -6,6 +6,9 @@ const int signalLength = BPL;
 double completeSignal[signalLength];
 double * signalIdx = completeSignal;
 
+const int filteredSignalLength = signalLength + BPL - 1;
+double filteredSignal[filteredSignalLength];
+
 void setup()
 {
   Serial.begin(9600);
@@ -65,12 +68,22 @@ void sampleMic()
   }
 }
 
-double[] convolve(double[] input, double[] filter) {
-  int N = x.size();
-  int M = h.size();
-  int outputSize = N + M - 1; // The size of the output
-  double filteredSignal[outputSize];
+void convolve(double input[], double filter[])
+{
+  // Reset filtered signal
+  for (int i = 0; i < filteredSignalLength; ++i)
+  {
+    filteredSignal[i] = 0;
+  }
 
+  // Perform the convolution
+  for (int n = 0; n < filteredSignalLength; ++n) {
+    for (int k = 0; k < BPL; ++k) {
+      if (n - k >= 0 && n - k < signalLength) {
+        filteredSignal[n] += input[n - k] * filter[k];  // Convolution sum
+      }
+    }
+  }
 }
 
 double getPWM() {
@@ -82,13 +95,14 @@ double getPWM() {
 void loop()
 {
   sampleMic();
-  
-  // for (int i = 0; i < signalLength; ++i) {
-  //   Serial.println(completeSignal[i]);
-  // }
+  convolve(completeSignal, BP);
 
-  // while (true)
-  // {
+  for (int i = 0; i < (filteredSignalLength); ++i) {
+    Serial.println(filteredSignal[i]);
+  }
 
-  // }
+  while (true)
+  {
+
+  }
 }
