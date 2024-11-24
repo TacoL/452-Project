@@ -2,11 +2,11 @@
 const double sampleWindow = 0.16666666666;  // 6000 Hz
 int const AMP_PIN = A0;       // Preamp output pin connected to A0
 
-const int signalLength = 300;
+const int signalLength = 100;
 double completeSignal[signalLength];
 double * signalIdx = completeSignal;
 
-const int filteredSignalLength = 300;
+const int filteredSignalLength = 100;
 double filteredSignal[filteredSignalLength];
 
 void setup()
@@ -43,6 +43,9 @@ double sampleOnce()
   //Serial.println(peakToPeak);
   double volts = (peakToPeak * 5.0) / 1024.0;  // convert to volts
   //Serial.println(volts);
+  if (volts > 5) {
+    volts = 0;
+  }
   return volts;
 }
 
@@ -134,18 +137,19 @@ double getPWM() {
 
 void loop()
 {
+  // Serial.println(sampleOnce());
   sampleMic();
 
-  for (int i = 0; i < signalLength; ++i) {
-    Serial.println(completeSignal[i]);
-  }
-
-  // filter_signal();
-  // Serial.println("filtered signal");
-
-  // for (int i = 0; i < filteredSignalLength; ++i) {
-  //   Serial.println(filteredSignal[i]);
+  // for (int i = 0; i < signalLength; ++i) {
+  //   Serial.println(completeSignal[i]);
   // }
+
+  filter_signal();
+  Serial.println("filtered signal");
+
+  for (int i = 0; i < filteredSignalLength; ++i) {
+    Serial.println(filteredSignal[i]);
+  }
 
   while (true)
   {
