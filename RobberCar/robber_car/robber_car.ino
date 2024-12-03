@@ -127,8 +127,8 @@ void loop()
     double scaleFactor = audio_scale(vReal[19]);
 //    analogWrite(left_motor, (20*255)/100);
 //    analogWrite(right_motor, (30*255)/100);
-    double duty_cycle = 0.15 + scaleFactor * 0.3;
-    analogWrite(left_motor, 255*0.6*duty_cycle);
+    double duty_cycle = 0.5 + scaleFactor * 0.4;
+    analogWrite(left_motor, 255*0.3*duty_cycle);
     analogWrite(right_motor, 255 * duty_cycle);
 
 //    double leftRead = readDutyCycle(left_motor);
@@ -144,7 +144,7 @@ void loop()
 //    analogWrite(left_motor, default_left);
 //    analogWrite(right_motor, default_right);
     analogWrite(left_motor, 255*0.1);
-    analogWrite(right_motor, 255*0.15);
+    analogWrite(right_motor, 255*0.5);
   }
 
 
