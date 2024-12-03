@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import serial
 import time
+from time import sleep
 # import struct
 import RPi.GPIO as GPIO
 import cv2
@@ -10,13 +11,20 @@ import numpy as np
 from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import CircularOutput
+from collections import deque
 import argparse
+from gpiozero import Buzzer
+from gpiozero import LED
+
 
 Kp = 1
 Kd = 0
 Ki = 0
 prev_error = 0
 error_sum = 0
+
+prev_left = 0
+prev_right = 0
 
 H_val = 15
 thold_val = 4
@@ -101,7 +109,7 @@ def contours_localization(img):
 
 # proportional and derivative controller limited to 20 to 80% duty cycle
 # can change this later
-def pid_controller(input):
+def pid_controller(input, prev_left, prev_right, pwm_array):
     # print(input)
     if input!= 0:
         normalized_input = input / 640
@@ -113,18 +121,30 @@ def pid_controller(input):
         # error_sum += error
         # I = Ki * error_sum
 
-        right_duty_cycle = ((P * 60) + 50)
-        left_duty_cycle = ((-P * 60) + 50)
+        right_duty_cycle = ((P * 30) + 30)
+        left_duty_cycle = ((-P * 30) + 30)
 
-        left_duty_cycle = max(20, min(80, left_duty_cycle))
-        right_duty_cycle = max(20, min(80,right_duty_cycle))
+        left_duty_cycle = max(15, min(45, left_duty_cycle))
+        right_duty_cycle = max(15, min(45,right_duty_cycle))
 
-        left_motor.ChangeDutyCycle(left_duty_cycle)
-        right_motor.ChangeDutyCycle(right_duty_cycle)
+        prev_left = left_duty_cycle
+        prev_right = right_duty_cycle
+
+        pwm_array.appendleft(left_duty_cycle)
+
     else:
-        left_motor.ChangeDutyCycle(1)
-        right_motor.ChangeDutyCycle(1)
-
+        pwm_array.appendleft(0)
+        if sum(pwm_array) == 0:
+            left_duty_cycle = 0
+            right_duty_cycle = 0
+        else:
+             left_duty_cycle = prev_left
+             right_duty_cycle = prev_right
+        
+    # else:
+        # left_motor.ChangeDutyCycle(1)
+        # right_motor.ChangeDutyCycle(1)
+    return left_duty_cycle, right_duty_cycle, prev_left, prev_right
     
 
 # # serial communication between arduino and raspberry pi
@@ -139,14 +159,30 @@ def pid_controller(input):
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(12, GPIO.OUT)
 GPIO.setup(13, GPIO.OUT)
-left_motor = GPIO.PWM(12, 1)
-right_motor = GPIO.PWM(13, 1)
+# GPIO.setup(17,GPIO.out)
+left_motor = GPIO.PWM(12, 100)
+right_motor = GPIO.PWM(13, 100)
+buzzer = Buzzer(17)
+led_red = LED(18)
+led_blue = LED(27)
 left_motor.start(0)
 right_motor.start(0)
 
 
 # initialize the camera and grab a reference to the raw camera capture
+
+# try:
+#     camera = Picamera2()
+#     camera.start_preview()
+#     sleep(5)
+#     camera.stop_preview()
+# except Exception as e:
+#     print(f"Error: {e}")
+# finally:
+#     camera.close()
+
 picam2 = Picamera2()
+sleep(5)
 video_config = picam2.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
 picam2.configure(video_config)
 encoder = H264Encoder(1000000, repeat=True)
@@ -155,7 +191,7 @@ picam2.start()
 picam2.start_encoder(encoder)
 time.sleep(0.1)
 
-
+pwm_array = deque(maxlen=5)
 
 while True:
     frame_start = time.time() # Start timer for whole frame
@@ -173,12 +209,37 @@ while True:
     x_coordinate, y_coordinate = center
     cv2.circle(image,center, radius,(0,255,0),2)
 
-    cv2.imshow("Image", image)
+    # cv2.imshow("Image", image)
 
-    cv2.imshow("Binary Image", binary_img)
-    # print(x_coordinate)
+    # cv2.imshow("Binary Image", binary_img)
+    # print(x_coordinate
 
-    pid_controller(x_coordinate)
+    left, right, prev_left, prev_right = pid_controller(x_coordinate, prev_left, prev_right, pwm_array)
+
+    int_left = int(left)
+    int_right = int(right) 
+
+    if(((int_right & int_left) > 0)):
+        buzzer.on()
+        led_red.on()
+        led_blue.on()
+    else:
+        buzzer.off()
+        led_red.off()
+        led_blue.off()
+
+
+    # print("Left Duty Cycle:")
+    # print(int_left)
+    # print("Right Duty Cycle:")
+    # print(int_right)
+
+
+    left_motor.ChangeDutyCycle(int_left)
+    sleep(0.1)
+    right_motor.ChangeDutyCycle(int_right)
+    sleep(0.1)
+
 
     key = cv2.waitKey(1) & 0xFF
 
@@ -187,6 +248,11 @@ while True:
     if key == ord("c"):
         plt.show()
 
+    sleep(0.01)
+
 
 cv2.destroyAllWindows()
 picam2.stop_encoder()
+
+
+# @reboot /usr/bin/python3 /home/pi/Labs/AutonomousRobbery/first_communication.py > /home/pi/program.log 2>&1
