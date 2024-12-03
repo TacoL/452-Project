@@ -128,7 +128,7 @@ void loop()
 //    analogWrite(left_motor, (20*255)/100);
 //    analogWrite(right_motor, (30*255)/100);
     double duty_cycle = 0.5 + scaleFactor * 0.4;
-    analogWrite(left_motor, 255*0.3*duty_cycle);
+    analogWrite(left_motor, 255*0.2*duty_cycle);
     analogWrite(right_motor, 255 * duty_cycle);
 
 //    double leftRead = readDutyCycle(left_motor);
@@ -141,10 +141,10 @@ void loop()
   }
   else {
     Serial.println("mic doesn't hear buzzer");
-//    analogWrite(left_motor, default_left);
-//    analogWrite(right_motor, default_right);
-    analogWrite(left_motor, 255*0.1);
-    analogWrite(right_motor, 255*0.5);
+    analogWrite(left_motor, 0);
+    analogWrite(right_motor, 0);
+    // analogWrite(left_motor, 255*0.1);
+    // analogWrite(right_motor, 255*0.5);
   }
 
 
