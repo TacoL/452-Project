@@ -37,6 +37,8 @@ Input vectors receive computed results from FFT
 double vReal[samples];
 double vImag[samples];
 
+double vRealHistory[20];
+
 ArduinoFFT<double> FFT = ArduinoFFT<double>(vReal, vImag, samples, samplingFrequency);
 
 #define SCL_INDEX 0x00
@@ -121,10 +123,29 @@ void loop()
   //   Serial.print(" Hz : ");
   //   Serial.println(vReal[i]); // Amplitude
   // }
-  if (vReal[19] > 500) {
- //   Serial.print("MIC HEARS BUZZER AT ");
-//    //Serial.println(vReal[19]);
-    double scaleFactor = audio_scale(vReal[19]);
+  for (int i = 1; i < 20; ++i) {
+    vRealHistory[i] = vRealHistory[i - 1];
+  }
+  vRealHistory[0] = vReal[19];
+  
+  bool detected = false;
+  for (int i = 0; i < 20; ++i) {
+    if (vRealHistory[i] > 1000) {
+      detected = true;
+    }
+  }
+
+  double totalvReal = 0;
+  for (int i = 0; i < 20; ++i) {
+    totalvReal += vRealHistory[i];
+  }
+  double avg = totalvReal / 20.0;
+
+  if (detected) {
+    Serial.print("MIC HEARS BUZZER AT ");
+    Serial.println(avg);
+    double scaleFactor = audio_scale(avg);
+    
 //    analogWrite(left_motor, (20*255)/100);
 //    analogWrite(right_motor, (30*255)/100);
     double duty_cycle = 0.5 + scaleFactor * 0.4;
@@ -140,7 +161,8 @@ void loop()
 //    Serial.println(rightRead);
   }
   else {
-    Serial.println("mic doesn't hear buzzer");
+    Serial.print("mic doesn't hear buzzer at ");
+    Serial.println(avg);
     analogWrite(left_motor, 0);
     analogWrite(right_motor, 0);
     // analogWrite(left_motor, 255*0.1);
