@@ -30,6 +30,13 @@ const double samplingFrequency = 8000; //Hz, must be less than 10000 due to ADC
 unsigned int sampling_period_us;
 unsigned long microseconds;
 
+// Ultrasonic sensor variables
+const int trigPin = 12;  
+const int echoPin = 13; 
+int distanceCounter = 0;
+
+float duration, distance;
+
 /*
 These are the input and output vectors
 Input vectors receive computed results from FFT
@@ -59,6 +66,11 @@ void setup()
 
   pinMode(left_motor, OUTPUT);
   pinMode(right_motor, OUTPUT);
+
+  //Ultrasonic sensor setup
+  pinMode(trigPin, OUTPUT);  
+  pinMode(echoPin, INPUT);
+
 }
 
 double audio_scale(double realAmp){
@@ -86,6 +98,35 @@ double readDutyCycle(int pin) {
 
 void loop()
 {
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration*.0343)/2;
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  if(distance <= 53){
+//    distanceCounter++;
+//  }
+//
+//  if(distanceCounter >= 3){
+//    distanceCounter = 0;
+//    
+////    analogWrite(left_motor, 255*0.1*0.9);
+////    analogWrite(right_motor, 255 * 0.9);
+
+    analogWrite(left_motor, 0);
+    analogWrite(right_motor, 229.5);
+    
+  }
+
+  else{
+  
   /*SAMPLING*/
   microseconds = micros();
   for(int i=0; i<samples; i++)
@@ -149,7 +190,7 @@ void loop()
 //    analogWrite(left_motor, (20*255)/100);
 //    analogWrite(right_motor, (30*255)/100);
     double duty_cycle = 0.5 + scaleFactor * 0.4;
-    analogWrite(left_motor, 255*0.2*duty_cycle);
+    analogWrite(left_motor, 255*0.4*duty_cycle);
     analogWrite(right_motor, 255 * duty_cycle);
 
 //    double leftRead = readDutyCycle(left_motor);
@@ -175,6 +216,7 @@ void loop()
   // Serial.println(" Hz");
 
   // while(1); /* Run Once */
+  }
   delay(100); /* Repeat after delay */
 }
 
